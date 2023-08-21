@@ -1,0 +1,7 @@
+Without other formating:
+time: 32 sec
+size: 1,34 Mb -> 719 kb
+
+With other formating:
+time: 31 sec
+size: 1,34 Mb -> 371 kb
