@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\CompressController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Auth;
 
 /*
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/compress', [CompressController::class, 'index'])->name('compress_page');
 Route::post('/compress', [CompressController::class, 'compress'])->name('compress');
+Route::get('/download/{video}', [CompressController::class, 'download'])->name('download');

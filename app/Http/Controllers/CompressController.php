@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use FFMpeg;
 use FFMpeg\Format\Video\X264;
+use GuzzleHttp\Psr7\Response;
+use Illuminate\Auth\Access\Response as AccessResponse;
+use Illuminate\Http\Client\Response as ClientResponse;
+use Illuminate\Http\Response as HttpResponse;
 
 class CompressController extends Controller
 {
@@ -53,13 +57,12 @@ class CompressController extends Controller
 
         $videoPath = $request->file('video')->store('videos');
 
-        $compressedPath = $this->compressProcess($videoPath);
+        $videoName = $this->compressProcess($videoPath);
 
-        echo 'Compresion Success: <br />';
-        echo $compressedPath . '<br />';
-
-        // echo "Video compressed </br>";
-        // echo $compressedPath;
+        return response()->json([
+            'video_name' => $videoName,
+            'message' => 'Compression Success'
+        ]);
     }
 
     protected function compressProcess($videoPath)
@@ -73,10 +76,22 @@ class CompressController extends Controller
             ->open($videoPath)
             ->export()
             ->toDisk('videos')
-            ->inFormat(new X264())
+            ->inFormat($lowBitrateFormat)
             ->save('compressed-videos/'.$videoName);
 
-        $outputPath = storage_path('app/compressed-videos/'.$videoName);
-        return $outputPath;
+        // $outputPath = storage_path('app/compressed-videos/'.$videoName);
+        return $videoName;
+    }
+
+    public function download($video) {
+        echo $video;
+        $file= storage_path('app') . "/compressed-videos/$video";
+        echo $file;
+
+        $headers = [
+            'Content-Type' => 'application/video',
+         ];
+
+        return response()->download($file, 'compressed.mp4', $headers);
     }
 }
