@@ -3,7 +3,6 @@
 @push('styles')
   <style>
     h1#hero { font-size: 4rem}
-    #mainContent { min-height: 100vh}
 
     #drop_zone {
       border-style: dashed;
@@ -22,16 +21,14 @@
     @media (max-width: 660px) {
       h1#hero { font-size: 2.5rem}
     }
-
-    .icons { pointer-events: none; }
   </style>
 @endpush
 
 @section('content')
 <div class="container">
   <div class="row">
-    <div class="d-flex flex-column align-items-center col-12 col-lg-8 offset-lg-2 bg-white py-5 shadow-sm px-lg-5" id="mainContent">
-      <h1 class="fw-bold mb-3 mt-5" id="hero">Video Compressor</h1>
+    <div class="d-flex flex-column align-items-center col-12 col-lg-8 offset-lg-2 bg-white py-5 shadow-sm px-lg-5">
+      <h1 class="fw-bold my-3" id="hero">Video Compressor</h1>
       <div class="d-flex flex-column w-100 d-none" id="allUploaded">
         <div class="btn-container d-flex w-100">
           <button class="btn btn-outline-primary rounded-top rounded-bottom-0 file-picker">
@@ -41,7 +38,13 @@
         <div class="d-flex flex-column" id="videos">
           <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
           <input type="file" id="selectfile" name="video" multiple>
-          
+          {{-- <div class="video d-flex border py-2 px-3 justify-content-between align-items-center">
+            <p class="m-0 p-0 video-title">Lorem ipsum dolor sit amet Lorem, ipsum.</p>
+            <p class="m-0 p-0 text-muted">38.33 Mb</p>
+            <button class="btn p-0 m-0">
+              <i class='bx bx-x-circle fs-3 m-0 p-0'></i>
+            </button>
+          </div> --}}
         </div>
         <div class="compress-btn p-3 bg-light d-flex justify-content-between border rounded-bottom">
           <span>Added <span id="fileUploaded">1</span> file</span>
@@ -72,10 +75,6 @@
 @push('scripts')
 <script>
   var fileobj;
-  const fileList = new DataTransfer();
-  let fileNumber = 0;
-  const fileNumbers = [];
-
   function middleElipsis(str) {
     if (str.length > 28) {
       return str.substr(0, 17) + '...' + str.substr(str.length-8, str.length);
@@ -98,95 +97,79 @@
     });
     $('#dropArea').on('dragend', () => $('#dropArea').addClass('d-none'));
     $('#dropArea').on('dragleave', () => $('#dropArea').addClass('d-none'));
-
     $("#dropArea").on("drop", event => {
       event.preventDefault();  
       event.stopPropagation();
       $('#dropArea').addClass('d-none');
-      const files = event.originalEvent.dataTransfer.files;
-      addFiles([...files]);
-    });
-
-    function addFiles(files) {
-      files.forEach(file => {
-        fileNumbers.push(fileNumber);
-        const fname = middleElipsis(file.name);
-        const fsize = file.size;
-        $('#videos').append(`
-          <div id="${`video${fileNumber}`}" class="video d-flex border py-2 px-3 justify-content-between align-items-center">
-             <p class="m-0 p-0 video-title w-50">${fname}</p>
-             <p class="m-0 p-0 text-muted">${ bytesToSize(fsize) }</p>
-             <button class="btn p-0 m-0 file-remove" data-number="${fileNumber}" onclick="${event => removeFile(event)}">
-               <i class='bx bx-x-circle fs-3 m-0 p-0 icons'></i>
-             </button>
-           </div>
-        `);
-        fileList.items.add(file);
-        fileNumber += 1;
-      });
-
-      document.getElementById('selectfile').files = fileList.files;
+      fileobj = event.originalEvent.dataTransfer.files[0];
+      const fname = middleElipsis(fileobj.name);
+      const fsize = fileobj.size;
+      $('#videos').append(`
+        <div class="video d-flex border py-2 px-3 justify-content-between align-items-center">
+           <p class="m-0 p-0 video-title w-50">${fname}</p>
+           <p class="m-0 p-0 text-muted">${ bytesToSize(fsize) }</p>
+           <button class="btn p-0 m-0">
+             <i class='bx bx-x-circle fs-3 m-0 p-0'></i>
+           </button>
+         </div>
+      `);
+      const inputFile = document.getElementById('selectfile');
+      inputFile.files[inputFile.files.length] = fileobj;
       $('#allUploaded').removeClass('d-none');
       $('#fileUploaded').html(document.getElementById('selectfile').files.length);
-
-      $('.file-remove').click(event => {
-        const number = event.target.dataset.number;
-        $(`#video${number}`).remove();
-        removeFile(parseInt(number));
-      });
-    }
-
-    function removeFile(number) {
-      const i = fileNumbers.indexOf(number);
-      fileList.items.remove(i);
-      fileNumbers.splice(i, 1);
-      document.getElementById('selectfile').files = fileList.files;
-      const fileCount = fileList.files.length;
-      if (fileCount) {
-        $('#fileUploaded').html(fileCount);
-      } else {
-        $('#allUploaded').addClass('d-none');
-      }
-    }
+    });
 
     $('.file-picker').click(() => {
       /*normal file pick*/
       document.getElementById('selectfile').click();
       document.getElementById('selectfile').onchange = () => {
-        const files = document.getElementById('selectfile').files;
-        addFiles([...files]);
+        fileobj = document.getElementById('selectfile').files[0];
+        const fname  = middleElipsis(fileobj.name);
+        const fsize = fileobj.size;
+        $('#videos').append(`
+          <div class="video d-flex border py-2 px-3 justify-content-between align-items-center">
+            <p class="m-0 p-0 video-title w-50">${fname}</p>
+            <p class="m-0 p-0 text-muted">${ bytesToSize(fsize) }</p>
+            <button class="btn p-0 m-0">
+              <i class='bx bx-x-circle fs-3 m-0 p-0'></i>
+            </button>
+          </div>
+        `);
+        $('#allUploaded').removeClass('d-none');
+        $('#fileUploaded').html(document.getElementById('selectfile').files.length);
       };
     });
-
     $('#compress_btn').click(function(){
-      if(!fileList.files.length){
+      if(fileobj=="" || fileobj==null){
         alert("Please select a file");
         return false;
       }else{
-        ajax_file_upload(fileList.files);
+        ajax_file_upload(fileobj);
       }
     });
   });
   
-  function ajax_file_upload(files) {
-    const form_data = new FormData(); 
-    form_data.append('videos', files);
-    $.ajax({
-      type: 'POST',
-      url: $('#url').html(),
-      headers: {'X-CSRF-TOKEN': $('#token').val()},
-      contentType: false,
-      processData: false,
-      data: form_data,
-      beforeSend:function(response) {
-        $('#message_info').html("Compressing your video, please wait...");
-      },
-      success:function(response) {
-        console.log(response);
-        $('#message_info').html(response.message);
-        $('#selectfile').val('');
-      }
-    });
+  function ajax_file_upload(file_obj) {
+    if(file_obj != undefined) {
+      const form_data = new FormData(); 
+      form_data.append('video', file_obj);
+      $.ajax({
+        type: 'POST',
+        url: $('#url').html(),
+        headers: {'X-CSRF-TOKEN': $('#token').val()},
+        contentType: false,
+        processData: false,
+        data: form_data,
+        beforeSend:function(response) {
+          $('#message_info').html("Compressing your video, please wait...");
+        },
+        success:function(response) {
+          console.log(response);
+          $('#message_info').html(response.message);
+          $('#selectfile').val('');
+        }
+      });
+    }
   }
 
   function bytesToSize(bytes) {

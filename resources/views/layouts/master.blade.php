@@ -7,12 +7,20 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="{{asset('css/app.css')}}">
     <title>Compress</title>
-    
+    <style>
+      #superHeader {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 5;
+      }
+    </style>
     @stack('styles')
 </head>
 <body class="relative">
 
-    <header>
+    <header id="superHeader">
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow">
             <div class="container">
               <a class="navbar-brand fw-bold" href="#">Vico</a>
@@ -39,9 +47,8 @@
         </nav>
     </header>
 
-    <main class="bg-light">
+    <main class="bg-light" id="superMain">
         @yield('content')
-
     </main>
     
     <script src="{{asset('js/jquery-3.6.4.js')}}"></script>
