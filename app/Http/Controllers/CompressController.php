@@ -52,35 +52,43 @@ class CompressController extends Controller
     public function compress(Request $request)
     {
         $request->validate([
-            'video' => 'required|mimetypes:video/avi,video/mpeg,video/mp4|max:50000', // Adjust max size as needed
+            'videos' => 'required', // Adjust max size as needed
+            'videos.*' => 'required|mimetypes:video/avi,video/mpeg,video/mp4|max:50000', // Adjust max size as needed
         ]);
 
-        $videoPath = $request->file('video')->store('videos');
+        $videoPath = [];
+        foreach ($request->file('videos') as $video) {
+            $videoPath[] = $video->store('videos');
+        }
 
-        $videoName = $this->compressProcess($videoPath);
+        $videoNames = $this->compressProcess($videoPath);
 
         return response()->json([
-            'video_name' => $videoName,
+            'video_name' => $videoNames,
             'message' => 'Compression Success'
         ]);
     }
 
     protected function compressProcess($videoPath)
     {
-        $videoName = pathinfo($videoPath, PATHINFO_FILENAME) .'.mp4';
+        $videoNames = [];
+        // $lowBitrateFormat = (new X264('libmp3lame', 'libx264'))
+        //     ->setKiloBitrate(500)
+        //     ->setAdditionalParameters(['-preset', 'fast', '-crf', '23']);
+        foreach ($videoPath as $video) {
+            $videoName = pathinfo($video, PATHINFO_FILENAME) .'.mp4';
+            $videoNames[] = $videoName;
+            FFMpeg::fromDisk('videos')
+                ->open($video)
+                ->export()
+                ->toDisk('videos')
+                ->inFormat(new X264())
+                ->save('compressed-videos/'.$videoName);
+        }
 
-        $lowBitrateFormat = (new X264('libmp3lame', 'libx264'))
-            ->setKiloBitrate(500)
-            ->setAdditionalParameters(['-preset', 'fast', '-crf', '23']);
-        FFMpeg::fromDisk('videos')
-            ->open($videoPath)
-            ->export()
-            ->toDisk('videos')
-            ->inFormat($lowBitrateFormat)
-            ->save('compressed-videos/'.$videoName);
 
         // $outputPath = storage_path('app/compressed-videos/'.$videoName);
-        return $videoName;
+        return $videoNames;
     }
 
     public function download($video) {

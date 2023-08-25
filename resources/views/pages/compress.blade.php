@@ -24,6 +24,13 @@
     }
 
     .icons { pointer-events: none; }
+    
+    #forbiddenFilesToast {
+      top: 50px;
+      left: 25px;
+      position: absolute;
+      z-index: 20;
+    }
   </style>
 @endpush
 
@@ -40,7 +47,7 @@
         </div>
         <div class="d-flex flex-column" id="videos">
           <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
-          <input type="file" id="selectfile" name="video" multiple>
+          <input type="file" id="selectfile" name="video" multiple accept="video/*">
           
         </div>
         <div class="compress-btn p-3 bg-light d-flex justify-content-between border rounded-bottom">
@@ -56,17 +63,29 @@
       <div id="drop_zone" class="bg-light my-3">
         <p>
           <button type="button" id="btn_file_pick" class="btn btn-outline-primary file-picker">
-            <i class='bx bxs-file-plus'></i> Select File
+            <i class='bx bxs-file-plus'></i> <span id="btnPicker">Select videos</span>
           </button>
         </p>
-        <p><small>Max uploaded: 500 MB</small></p>
+        <p><small>Max: 10 files, 500 MB</small></p>
         <p id="message_info"></p>
      </div>
     </div>
   </div>
+
 </div>
 
 @includeIf('components.drop-area')
+<div id="forbiddenFilesToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+  <div class="toast-header">
+    <i class="bx bx-x text-danger fs-4"></i>
+    <strong class="me-auto" id="toastTitle">Format file tidak didukung</strong>
+    <small>just now</small>
+    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+  </div>
+  <div class="toast-body" id="toastBody">
+    
+  </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -83,6 +102,17 @@
     return str;
   }
 
+  function bytesToSize(bytes) {
+    var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    if (bytes == 0) return '0 Byte';
+    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    let num = (bytes / Math.pow(1024, i)).toFixed(2)
+    //  num = num[num.length-1] === '0' ? num.slice(0, num.length-1) : num;
+    return num + ' ' + sizes[i];
+  }
+
+  // const ext = str => (str.split('.')).pop();
+
   $(document).ready(function(){
     $(".container").on("dragover", event => {
       event.preventDefault();  
@@ -90,6 +120,7 @@
       $('#dropArea').removeClass('d-none');
       return false;
     });
+    $('.container').on('dragend', () => $('#dropArea').addClass('d-none'));
 
     $("#dropArea").on("dragover", event => {
       event.preventDefault();  
@@ -104,7 +135,24 @@
       event.stopPropagation();
       $('#dropArea').addClass('d-none');
       const files = event.originalEvent.dataTransfer.files;
-      addFiles([...files]);
+      const allowedExts = ['video/mp4', 'video/mkv'];
+      const filteredFiles = [...files].filter(file => allowedExts.includes(file.type));
+      const invalid = [...files].filter(file => !(allowedExts.includes(file.type)));
+      addFiles(filteredFiles);
+      if (invalid.length) {
+        let listInvalidFile = '';
+        invalid.forEach(file => {
+          listInvalidFile += `<li>${middleElipsis(file.name)}</li>`;
+        })
+        setTimeout(() => {
+          $('#toastBody').html(`
+            <span>${invalid.length} file gagal diupload :</span>
+            <ul>${listInvalidFile}</ul>
+            <small class="text-muted">Saran: Tolong upload file video</small>
+          `);
+          $('#forbiddenFilesToast').toast('show');
+        }, 500);
+      }
     });
 
     function addFiles(files) {
@@ -127,6 +175,8 @@
 
       document.getElementById('selectfile').files = fileList.files;
       $('#allUploaded').removeClass('d-none');
+      $('#drop_zone').addClass('d-none');
+      $('#btnPicker').html('Select more videos');
       $('#fileUploaded').html(document.getElementById('selectfile').files.length);
 
       $('.file-remove').click(event => {
@@ -146,6 +196,8 @@
         $('#fileUploaded').html(fileCount);
       } else {
         $('#allUploaded').addClass('d-none');
+        $('#drop_zone').removeClass('d-none');
+        $('#btnPicker').html('Select videos');
       }
     }
 
@@ -169,8 +221,10 @@
   });
   
   function ajax_file_upload(files) {
-    const form_data = new FormData(); 
-    form_data.append('videos', files);
+    const form_data = new FormData();
+    [...files].forEach(file => {
+      form_data.append('videos[]', file);
+    });
     $.ajax({
       type: 'POST',
       url: $('#url').html(),
@@ -187,15 +241,6 @@
         $('#selectfile').val('');
       }
     });
-  }
-
-  function bytesToSize(bytes) {
-    var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    if (bytes == 0) return '0 Byte';
-    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-    let num = (bytes / Math.pow(1024, i)).toFixed(2)
-    //  num = num[num.length-1] === '0' ? num.slice(0, num.length-1) : num;
-    return num + ' ' + sizes[i];
   }
 
 </script>

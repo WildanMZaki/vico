@@ -1,0 +1,1 @@
+const sorp = (num, singular, plural) => (num < 2) ? singular : (plural ? plural : `${singular}s`);
