@@ -40,6 +40,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        // This used for guard api
+        'api' => [
+            'driver' => 'jwt', // Set the driver to 'jwt'
+            'provider' => 'users',
+        ],
     ],
 
     /*
