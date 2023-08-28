@@ -13,6 +13,7 @@ class CreateCompressedVideosTable extends Migration
             $table->string('download_id', 25);
             $table->string('video_name', 100);
             $table->boolean('status')->default(false);
+            $table->tinyInteger('progress', false, true)->default(0);
             $table->timestamps();
         });
     }

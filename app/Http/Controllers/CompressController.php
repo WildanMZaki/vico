@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use FFMpeg;
-use FFMpeg\Format\Video\X264;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Auth\Access\Response as AccessResponse;
 use Illuminate\Http\Client\Response as ClientResponse;
 use Illuminate\Http\Response as HttpResponse;
+use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg as FFMpeg;
+use FFMpeg\Format\Video\X264;
 
 class CompressController extends Controller
 {
@@ -56,39 +56,46 @@ class CompressController extends Controller
             'videos.*' => 'required|mimetypes:video/avi,video/mpeg,video/mp4|max:50000', // Adjust max size as needed
         ]);
 
-        $videoPath = [];
+        $videoNames = [];
         foreach ($request->file('videos') as $video) {
-            $videoPath[] = $video->store('videos');
+            $videoName = $video->getClientOriginalName();
+
+            // Save the video to storage
+            $video->storeAs('videos', $videoName);
+            $videoNames[] = $videoName;
         }
 
-        $videoNames = $this->compressProcess($videoPath);
+        $this->compressProcess($videoNames);
 
         return response()->json([
             'video_name' => $videoNames,
-            'message' => 'Compression Success'
+            'message' => 'Compression Success',
+            'progress' => $this->progress
         ]);
     }
-
-    protected function compressProcess($videoPath)
+    public $progress = [];
+    protected function compressProcess($videoNames)
     {
-        $videoNames = [];
         // $lowBitrateFormat = (new X264('libmp3lame', 'libx264'))
         //     ->setKiloBitrate(500)
         //     ->setAdditionalParameters(['-preset', 'fast', '-crf', '23']);
-        foreach ($videoPath as $video) {
-            $videoName = pathinfo($video, PATHINFO_FILENAME) .'.mp4';
-            $videoNames[] = $videoName;
+        
+        foreach ($videoNames as $video) {
+            // $videoName = pathinfo($video, PATHINFO_FILENAME) .'.mp4';
+
             FFMpeg::fromDisk('videos')
                 ->open($video)
                 ->export()
+                ->onProgress(function ($percentage, $remaining, $rate) {
+                    $this->progress[] = [$percentage, $remaining, $rate];
+                })
                 ->toDisk('videos')
                 ->inFormat(new X264())
-                ->save('compressed-videos/'.$videoName);
+                ->save('compressed-videos/'.$video);
         }
 
 
         // $outputPath = storage_path('app/compressed-videos/'.$videoName);
-        return $videoNames;
     }
 
     public function download($video) {

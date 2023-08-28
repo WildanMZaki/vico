@@ -58,7 +58,7 @@
         </div>
       </div>
 
-      <p class="d-none">{{ route('compress') }}</p>
+      <p class="d-none" id="url">{{ route('compress') }}</p>
 
       <div id="drop_zone" class="bg-light my-3">
         <p>

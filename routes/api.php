@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('auth/login', [AuthController::class, 'authenticate'])->name('login-api');
 
 Route::post('compress-video', [VideoController::class, 'upload'])->name('upload-video');
+Route::get('compress-progress/{id}', [VideoController::class, 'compress_progress'])->name('progress.compression');
 
 // Protected route using JWT middleware
 Route::middleware('auth:api')->group(function () {

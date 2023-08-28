@@ -162,12 +162,12 @@
         const fsize = file.size;
         $('#videos').append(`
           <div id="${`video${fileNumber}`}" class="video d-flex border py-2 px-3 justify-content-between align-items-center">
-             <p class="m-0 p-0 video-title w-50">${fname}</p>
-             <p class="m-0 p-0 text-muted">${ bytesToSize(fsize) }</p>
-             <button class="btn p-0 m-0 file-remove" data-number="${fileNumber}" onclick="${event => removeFile(event)}">
-               <i class='bx bx-x-circle fs-3 m-0 p-0 icons'></i>
-             </button>
-           </div>
+            <p class="m-0 p-0 video-title w-50">${fname}</p>
+            <p class="m-0 p-0 text-muted">${ bytesToSize(fsize) }</p>
+            <button class="btn p-0 m-0 file-remove" data-number="${fileNumber}" onclick="${event => removeFile(event)}">
+              <i class='bx bx-x-circle fs-3 m-0 p-0 icons'></i>
+            </button>
+          </div>
         `);
         fileList.items.add(file);
         fileNumber += 1;
@@ -236,9 +236,10 @@
         $('#message_info').html("Compressing your video, please wait...");
       },
       success:function(response) {
-        console.log(response);
-        $('#message_info').html(response.message);
+        // console.log(response);
+        // $('#message_info').html(response.message);
         $('#selectfile').val('');
+        location.href = response.url
       }
     });
   }
