@@ -174,8 +174,6 @@
         const sizeAll = [...fileList.files].reduce((x, {size}) => x + size, 0) + file.size;
         maxFileReached = fileList.files.length +1 > maxFile;
         maxSizeReached = sizeAll > maxSizeTotal * 1000000;
-        console.log(maxFileReached, maxSizeReached)
-        console.log(Math.round(sizeAll/1000000), fileList.files.length+1)
         if (!maxFileReached && !maxSizeReached) {
           fileNumbers.push(fileNumber);
           const fname = middleElipsis(file.name);
