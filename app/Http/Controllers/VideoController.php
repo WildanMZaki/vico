@@ -6,6 +6,7 @@ use App\Jobs\CompressVideosJob;
 use App\Models\CompressedVideo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use ZipArchive;
 
 class VideoController extends Controller
 {       
@@ -62,6 +63,26 @@ class VideoController extends Controller
         ];
 
         return response()->download($file, 'compressed_'.basename($video), $headers);
+    }
+    
+    public function download_all($id) {
+        $videos = CompressedVideo::where('download_id', $id)->get('video_name');
+        $zip_file = storage_path("app/compressed-videos/$id.zip");
+        $zip = new ZipArchive();
+        $zip->open($zip_file, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        foreach ($videos as $video) {
+            $videoPath = storage_path("app/compressed-videos/$video->video_name");
+            $zip->addFile($videoPath, "compressed-videos/$video->video_name");
+        }
+        $zip->close();
+
+        // Zipper::make('mydir/mytest12.zip')->add(['thumbnail/1461610581.jpg','thumbnail/1461610616.jpg']);
+
+        $headers = [
+            'Content-Type' => 'application/zip',
+        ];
+
+        return response()->download($zip_file, "compressed-videos.zip", $headers);
     }
 
     public function compress_progress($id) {

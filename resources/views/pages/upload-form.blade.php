@@ -25,9 +25,9 @@
 
     .icons { pointer-events: none; }
     
-    #forbiddenFilesToast {
+    .toast-container {
       top: 50px;
-      left: 25px;
+      right: 25px;
       position: absolute;
       z-index: 20;
     }
@@ -47,7 +47,7 @@
         </div>
         <div class="d-flex flex-column" id="videos">
           <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
-          <input type="file" id="selectfile" name="video" multiple accept="video/*">
+          <input type="file" id="selectfile" name="video" multiple accept="video/*" max="10">
           
         </div>
         <div class="compress-btn p-3 bg-light d-flex justify-content-between border rounded-bottom">
@@ -75,22 +75,17 @@
 </div>
 
 @includeIf('components.drop-area')
-<div id="forbiddenFilesToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-  <div class="toast-header">
-    <i class="bx bx-x text-danger fs-4"></i>
-    <strong class="me-auto" id="toastTitle">Format file tidak didukung</strong>
-    <small>just now</small>
-    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-  </div>
-  <div class="toast-body" id="toastBody">
-    
-  </div>
+
+<div class="toast-container" id="toastContainer">
+  {{-- Toasts goes here --}}
 </div>
+
 @endsection
 
 @push('scripts')
 <script>
-  var fileobj;
+  const maxFile = 10;
+  const maxSizeTotal = 500;
   const fileList = new DataTransfer();
   let fileNumber = 0;
   const fileNumbers = [];
@@ -112,6 +107,24 @@
   }
 
   // const ext = str => (str.split('.')).pop();
+
+  function addToast(title, body, time = 'just now') {
+    const t = (new Date()).getTime();
+    $('#toastContainer').append(`
+      <div id="theToast${t}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <i class="bx bx-x text-danger fs-4"></i>
+          <strong class="me-auto" id="toastTitle">${title}</strong>
+          <small id="toastTime">${time}</small>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastBody">
+          ${body}
+        </div>
+      </div>
+    `);
+    $(`#theToast${t}`).toast('show');
+  }
 
   $(document).ready(function(){
     $(".container").on("dragover", event => {
@@ -143,35 +156,58 @@
         let listInvalidFile = '';
         invalid.forEach(file => {
           listInvalidFile += `<li>${middleElipsis(file.name)}</li>`;
-        })
+        });
         setTimeout(() => {
-          $('#toastBody').html(`
+          addToast('Format file tidak didukung', `
             <span>${invalid.length} file gagal diupload :</span>
             <ul>${listInvalidFile}</ul>
             <small class="text-muted">Saran: Tolong upload file video</small>
           `);
-          $('#forbiddenFilesToast').toast('show');
         }, 500);
       }
     });
 
     function addFiles(files) {
+      let maxFileReached = false;
+      let maxSizeReached = false;
       files.forEach(file => {
-        fileNumbers.push(fileNumber);
-        const fname = middleElipsis(file.name);
-        const fsize = file.size;
-        $('#videos').append(`
-          <div id="${`video${fileNumber}`}" class="video d-flex border py-2 px-3 justify-content-between align-items-center">
-            <p class="m-0 p-0 video-title w-50">${fname}</p>
-            <p class="m-0 p-0 text-muted">${ bytesToSize(fsize) }</p>
-            <button class="btn p-0 m-0 file-remove" data-number="${fileNumber}" onclick="${event => removeFile(event)}">
-              <i class='bx bx-x-circle fs-3 m-0 p-0 icons'></i>
-            </button>
-          </div>
-        `);
-        fileList.items.add(file);
-        fileNumber += 1;
+        const sizeAll = [...fileList.files].reduce((x, {size}) => x + size, 0) + file.size;
+        maxFileReached = fileList.files.length +1 > maxFile;
+        maxSizeReached = sizeAll > maxSizeTotal * 1000000;
+        console.log(maxFileReached, maxSizeReached)
+        console.log(Math.round(sizeAll/1000000), fileList.files.length+1)
+        if (!maxFileReached && !maxSizeReached) {
+          fileNumbers.push(fileNumber);
+          const fname = middleElipsis(file.name);
+          const fsize = file.size;
+          $('#videos').append(`
+            <div id="${`video${fileNumber}`}" class="video d-flex border py-2 px-3 justify-content-between align-items-center">
+              <p class="m-0 p-0 video-title w-50">${fname}</p>
+              <p class="m-0 p-0 text-muted">${ bytesToSize(fsize) }</p>
+              <button class="btn p-0 m-0 file-remove" data-number="${fileNumber}" onclick="${event => removeFile(event)}">
+                <i class='bx bx-x-circle fs-3 m-0 p-0 icons'></i>
+              </button>
+            </div>
+          `);
+          fileList.items.add(file);
+          fileNumber += 1;
+        }
       });
+
+      if (maxFileReached) {
+        setTimeout(() => {
+          addToast('Jumlah maksimum file tercapai', `
+            <span>Beberapa file tidak dapat diupload</span>
+          `);
+        }, 400);
+      }
+      if (maxSizeReached) {
+        setTimeout(() => {
+          addToast('Ukuran maksimum file tercapai', `
+            <span>Beberapa file tidak dapat diupload</span>
+          `);
+        }, 500);
+      }
 
       document.getElementById('selectfile').files = fileList.files;
       $('#allUploaded').removeClass('d-none');

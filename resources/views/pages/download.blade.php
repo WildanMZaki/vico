@@ -30,7 +30,7 @@
           @if (count($videos))
             @foreach ($videos as $i => $video)
               <div id="video{{$i}}" class="video d-flex border py-2 px-3 justify-content-between align-items-center">
-                <p class="m-0 p-0 video-title w-50">{{$video->video_name}}</p>
+                <p class="m-0 p-0 video-title w-50">{{middleEllipsis($video->video_name)}}</p>
                 <p class="m-0 p-0 text-muted"></p>
                 <button id="downloadBtn{{$video->id}}" disabled class="btn btn-outline-primary m-0 downloadBtn" data-url="{{route('download.video', $video->video_name)}}">
                   <span id="downloadBtnLabel{{$video->id}}">0 %</span> <i class='bx bxs-download m-0 icons'></i>
@@ -41,9 +41,14 @@
               
           @endif
         </div>
-        <div class="compress-btn p-3 bg-light d-flex justify-content-end border rounded-bottom">
+        <div class="compress-btn p-3 bg-light d-flex justify-content-between border rounded-bottom">
           {{-- <span>Added <span id="fileUploaded">1</span> file</span> --}}
-          <button type="button" class="btn btn-primary" id="downloadAllBtn" disabled>
+          <a href="{{route('upload.page')}}" class="invisible" id="uploadMore">
+            <button type="submit" class="btn btn-outline-secondary">
+              <i class="bx bx-left-arrow-alt"></i> Compress more videos
+            </button>
+          </a>
+          <button type="button" class="btn btn-primary" id="downloadAllBtn" disabled data-url="{{route('download.allvideo', $id)}}">
             Download All <i class='bx bx-download'></i>
           </button>
         </div>
@@ -66,11 +71,11 @@
 {{-- <script src="{{asset('js/utils/ajax-sender.js')}}"></script> --}}
 <script>
   const download = url => {
-    location.href = url;
-  }
-  $('.downloadBtn').click(e => {
-    download(e.target.dataset.url);
-  })
+    window.open(url);
+  };
+  $('#videos').on('click', '.downloadBtn', e => {
+    download(e.currentTarget.dataset.url);
+  });
 
   function checkCompressionStatus() {
     let stop = false;
@@ -86,9 +91,10 @@
         stop = compressed.length === data.length;
         // Poll again after a certain interval
         if (!stop) {
-          setTimeout(checkCompressionStatus, 7500); // Poll every 5 seconds
+          setTimeout(checkCompressionStatus, 5000); // Poll every 5 seconds
         } else {
           $('#downloadAllBtn').attr('disabled', false);
+          $('#uploadMore').toggleClass('invisible')
         }
       })
       .catch(error => {
@@ -97,10 +103,11 @@
   }
 
   // Start polling when the page loads and wait 4 seconds
-  setTimeout(checkCompressionStatus, 4000);
+  setTimeout(checkCompressionStatus, 2500);
 
-  $('#downloadAllBtn').click(() => {
-    
+  $('#downloadAllBtn').click((e) => {
+    const url = e.target.dataset.url;
+    window.open(url);
   });
 
 </script>
