@@ -22,7 +22,7 @@ class VideoController extends Controller
         $videoNames = [];
 
         foreach ($videoFiles as $videoFile) {
-            $videoName = $videoFile->getClientOriginalName();
+            $videoName = time() .'-'. $videoFile->getClientOriginalName();
 
             // Save the video to storage
             $videoFile->storeAs('videos', $videoName);
@@ -62,7 +62,7 @@ class VideoController extends Controller
             'Content-Type' => 'application/video',
         ];
 
-        return response()->download($file, 'compressed_'.basename($video), $headers);
+        return response()->download($file, basename($video), $headers);
     }
     
     public function download_all($id) {
